@@ -8,7 +8,11 @@
 
 ## 👥 Team Members
 
-* **aj515** (Software Engineer & Architect) — [GitHub Profile](https://github.com/aj515)
+* **Addrienne Joseph Lobiano** (`aj515`) — *Software Engineer & Lead Architect* ([GitHub Profile](https://github.com/aj515))
+* **Achilly Ceasar Sarsalejo** — *Frontend Developer & UI Specialist*
+* **Kyth Andre Carael** — *Data Analyst & Weather Integrations Specialist*
+* **Danniezon Meir Po** — *DevOps Engineer & CI/CD Deployment Manager*
+* **James Christopher Estacion** — *Quality Assurance & API Documentation Lead*
 
 ---
 
