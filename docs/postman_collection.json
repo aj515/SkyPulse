@@ -1,0 +1,202 @@
+{
+  "info": {
+    "_postman_id": "84be89b9-d2b4-4e2a-bb39-4d6d84a7e914",
+    "name": "SkyPulse Weather API Collection",
+    "description": "Collection of API endpoints used by SkyPulse Weather Dashboard to query real-time geocodes, current weather forecast details, and interactive map tile layers from OpenWeatherMap.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Direct Geocoding (City Search)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.openweathermap.org/geo/1.0/direct?q={{city_name}}&limit=5&appid={{api_key}}",
+          "protocol": "https",
+          "host": [
+            "api",
+            "openweathermap",
+            "org"
+          ],
+          "path": [
+            "geo",
+            "1.0",
+            "direct"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "{{city_name}}"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            },
+            {
+              "key": "appid",
+              "value": "{{api_key}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Reverse Geocoding (GPS Coordinates)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.openweathermap.org/geo/1.0/reverse?lat={{lat}}&lon={{lon}}&limit=1&appid={{api_key}}",
+          "protocol": "https",
+          "host": [
+            "api",
+            "openweathermap",
+            "org"
+          ],
+          "path": [
+            "geo",
+            "1.0",
+            "reverse"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "{{lat}}"
+            },
+            {
+              "key": "lon",
+              "value": "{{lon}}"
+            },
+            {
+              "key": "limit",
+              "value": "1"
+            },
+            {
+              "key": "appid",
+              "value": "{{api_key}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "One Call Forecast (Comprehensive Weather)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.openweathermap.org/data/2.5/onecall?lat={{lat}}&lon={{lon}}&units=metric&exclude=minutely&appid={{api_key}}",
+          "protocol": "https",
+          "host": [
+            "api",
+            "openweathermap",
+            "org"
+          ],
+          "path": [
+            "data",
+            "2.5",
+            "onecall"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "{{lat}}"
+            },
+            {
+              "key": "lon",
+              "value": "{{lon}}"
+            },
+            {
+              "key": "units",
+              "value": "metric"
+            },
+            {
+              "key": "exclude",
+              "value": "minutely"
+            },
+            {
+              "key": "appid",
+              "value": "{{api_key}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Weather Map Tile Overlay",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://tile.openweathermap.org/map/temp_new/5/28/14.png?appid={{api_key}}",
+          "protocol": "https",
+          "host": [
+            "tile",
+            "openweathermap",
+            "org"
+          ],
+          "path": [
+            "map",
+            "temp_new",
+            "5",
+            "28",
+            "14.png"
+          ],
+          "query": [
+            {
+              "key": "appid",
+              "value": "{{api_key}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api_key",
+      "value": "672fa5ded1db478f8d846781cf0f7073",
+      "type": "string"
+    },
+    {
+      "key": "city_name",
+      "value": "Manila",
+      "type": "string"
+    },
+    {
+      "key": "lat",
+      "value": "14.5995",
+      "type": "string"
+    },
+    {
+      "key": "lon",
+      "value": "120.9842",
+      "type": "string"
+    }
+  ]
+}
