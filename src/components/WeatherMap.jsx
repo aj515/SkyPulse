@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWeatherContext } from '../context/WeatherContext';
+import { useSettings } from '../context/SettingsContext';
 import { MAP_LAYERS } from '../utils/constants';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
 
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
@@ -234,6 +236,7 @@ function SimulatedRadar({ activeLayer, center, currentData }) {
 export default function WeatherMap() {
   const { t } = useTranslation();
   const { city, current } = useWeatherContext();
+  const { effectiveApiKey, isDemoKey } = useSettings();
   const [activeLayer, setActiveLayer] = useState('temp');
 
   if (!city) return null;
@@ -246,6 +249,11 @@ export default function WeatherMap() {
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   const selectedLayer = MAP_LAYERS.find((l) => l.id === activeLayer);
+
+  const activeLayerUrl = useMemo(() => {
+    if (!selectedLayer) return '';
+    return selectedLayer.url.replace(/appid=[^&]*/, `appid=${effectiveApiKey}`);
+  }, [selectedLayer, effectiveApiKey]);
 
   return (
     <div className="glass-card-static p-5 md:p-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -301,8 +309,8 @@ export default function WeatherMap() {
           attributionControl={false}
         >
           <TileLayer url={baseTileUrl} />
-          {selectedLayer && (
-            <TileLayer url={selectedLayer.url} opacity={0.6} />
+          {selectedLayer && activeLayerUrl && !isDemoKey(effectiveApiKey) && (
+            <TileLayer url={activeLayerUrl} opacity={0.6} />
           )}
           
           {/* Interactive Simulated Weather Radar Overlay */}

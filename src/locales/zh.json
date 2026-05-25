@@ -49,5 +49,19 @@
   "min": "最低",
   "max": "最高",
   "dew_point": "露点",
-  "pop": "降水概率"
+  "pop": "降水概率",
+  "api_key_manager": "API密钥管理器",
+  "api_key_placeholder": "输入 OpenWeatherMap API 密钥...",
+  "validate_save": "验证并保存",
+  "key_valid": "API密钥验证成功！",
+  "key_invalid": "API密钥无效或未激活。请检查并重试。",
+  "key_help": "在 OpenWeatherMap 获取免费 API 密钥",
+  "current_active_key": "当前有效的 API 密钥来源",
+  "key_source_env": "环境变量 (.env)",
+  "key_source_user": "自定义用户覆盖",
+  "configure_key": "配置密钥",
+  "api_key_label": "OpenWeatherMap API 密钥",
+  "testing_key": "正在测试密钥...",
+  "demo_mode_active": "演示模式",
+  "demo_mode_desc": "SkyPulse目前正在离线演示模式下运行，使用高可靠性的本地模拟数据生成器。"
 }

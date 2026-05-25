@@ -49,5 +49,19 @@
   "min": "最低",
   "max": "最高",
   "dew_point": "露点温度",
-  "pop": "降水確率"
+  "pop": "降水確率",
+  "api_key_manager": "APIキー管理",
+  "api_key_placeholder": "OpenWeatherMap API キーを入力...",
+  "validate_save": "検証して保存",
+  "key_valid": "APIキーの検証に成功しました！",
+  "key_invalid": "無効または未アクティブなAPIキーです。確認して再試行してください。",
+  "key_help": "OpenWeatherMap で無料の API キーを取得する",
+  "current_active_key": "有効な API キーソース",
+  "key_source_env": "環境変数 (.env)",
+  "key_source_user": "カスタムユーザーオーバーライド",
+  "configure_key": "キーを構成",
+  "api_key_label": "OpenWeatherMap API キー",
+  "testing_key": "キーをテスト中...",
+  "demo_mode_active": "デモモード",
+  "demo_mode_desc": "SkyPulseは現在、障害防止のローカライズされた模擬データジェネレーターを使用して、オフラインデモモードで実行されています。"
 }

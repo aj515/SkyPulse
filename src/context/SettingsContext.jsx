@@ -17,6 +17,10 @@ export function SettingsProvider({ children }) {
     return localStorage.getItem('skypulse_language') || 'en';
   });
 
+  const [customApiKey, setCustomApiKeyInternal] = useState(() => {
+    return localStorage.getItem('skypulse_api_key') || '';
+  });
+
   const [favorites, setFavoritesState] = useState(() => {
     try {
       const saved = localStorage.getItem('skypulse_favorites');
@@ -44,6 +48,14 @@ export function SettingsProvider({ children }) {
   }, [language]);
 
   useEffect(() => {
+    if (customApiKey) {
+      localStorage.setItem('skypulse_api_key', customApiKey);
+    } else {
+      localStorage.removeItem('skypulse_api_key');
+    }
+  }, [customApiKey]);
+
+  useEffect(() => {
     localStorage.setItem('skypulse_favorites', JSON.stringify(favorites));
   }, [favorites]);
 
@@ -53,6 +65,7 @@ export function SettingsProvider({ children }) {
 
   const setUnits = useCallback((u) => setUnitsState(u), []);
   const setLanguage = useCallback((l) => setLanguageState(l), []);
+  const setCustomApiKey = useCallback((key) => setCustomApiKeyInternal(key.trim()), []);
 
   const addFavorite = useCallback((city) => {
     setFavoritesState((prev) => {
@@ -79,11 +92,26 @@ export function SettingsProvider({ children }) {
     });
   }, []);
 
+  // Compute effective active key
+  const envKey = import.meta.env.VITE_OWM_API_KEY || import.meta.env.VITE_OPENWEATHER_API_KEY || '';
+  const effectiveApiKey = customApiKey || envKey || 'demo_key_replace_me';
+
+  const isDemoKey = useCallback((keyToCheck = effectiveApiKey) => {
+    return (
+      !keyToCheck ||
+      keyToCheck === 'demo_key_replace_me' ||
+      keyToCheck === 'your_openweathermap_api_key_here'
+    );
+  }, [effectiveApiKey]);
+
   return (
     <SettingsContext.Provider
       value={{
         units, setUnits,
         language, setLanguage,
+        customApiKey, setCustomApiKey,
+        effectiveApiKey,
+        isDemoKey,
         favorites, addFavorite, removeFavorite, isFavorite,
         recentSearches, addRecentSearch,
       }}
@@ -92,3 +120,4 @@ export function SettingsProvider({ children }) {
     </SettingsContext.Provider>
   );
 }
+

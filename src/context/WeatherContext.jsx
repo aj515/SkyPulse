@@ -52,11 +52,35 @@ function weatherReducer(state, action) {
 
 export function WeatherProvider({ children }) {
   const [state, dispatch] = useReducer(weatherReducer, initialState);
-  const { units, language } = useSettings();
+  const { units, language, effectiveApiKey, isDemoKey } = useSettings();
 
   const fetchWeather = useCallback(
     async (lat, lon, cityInfo = null) => {
       dispatch({ type: 'FETCH_START' });
+
+      // Short-circuit instantly if in demo mode to prevent slow connection timeouts
+      if (isDemoKey(effectiveApiKey)) {
+        const demoCity = cityInfo || DEMO_CITY;
+        const demoData = getDemoWeatherData(units, demoCity.name);
+        
+        // Add a slight artificial delay so the UI feels fluid rather than jarringly instant
+        setTimeout(() => {
+          dispatch({
+            type: 'FETCH_SUCCESS',
+            payload: {
+              current: demoData.current,
+              hourly: demoData.hourly,
+              daily: demoData.daily,
+              alerts: demoData.alerts,
+              city: demoCity,
+              timezone_offset: demoData.timezone_offset,
+              source: 'demo',
+            },
+          });
+        }, 300);
+        return;
+      }
+
       try {
         const data = await fetchAllWeatherData(lat, lon, units, language);
 

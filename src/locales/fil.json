@@ -49,5 +49,19 @@
   "min": "Min",
   "max": "Max",
   "dew_point": "Dew Point",
-  "pop": "Pag-ulan %"
+  "pop": "Pag-ulan %",
+  "api_key_manager": "Tagapamahala ng API Key",
+  "api_key_placeholder": "Ilagay ang OpenWeatherMap API Key...",
+  "validate_save": "I-validate at I-save",
+  "key_valid": "Matagumpay na na-validate ang API Key!",
+  "key_invalid": "Inbalido o hindi aktibong API Key. Pakisuri at subukan muli.",
+  "key_help": "Kumuha ng libreng API Key sa OpenWeatherMap",
+  "current_active_key": "Aktibong Pinagmulan ng API Key",
+  "key_source_env": "Environment Variable (.env)",
+  "key_source_user": "Custom na User Override",
+  "configure_key": "I-configure ang Key",
+  "api_key_label": "OpenWeatherMap API Key",
+  "testing_key": "Sinusubukan ang Key...",
+  "demo_mode_active": "Demo Mode",
+  "demo_mode_desc": "Kasalukuyang tumatakbo ang SkyPulse sa offline demo mode gamit ang fail-safe localized mock data generator."
 }

@@ -49,5 +49,19 @@
   "min": "Mín",
   "max": "Máx",
   "dew_point": "Punto de Rocío",
-  "pop": "Precipitación %"
+  "pop": "Precipitación %",
+  "api_key_manager": "Administrador de Claves API",
+  "api_key_placeholder": "Ingresa la clave API de OpenWeatherMap...",
+  "validate_save": "Validar y Guardar",
+  "key_valid": "¡Clave API validada con éxito!",
+  "key_invalid": "Clave API inválida o inactiva. Verifica e intenta de nuevo.",
+  "key_help": "Obtén una clave API gratis en OpenWeatherMap",
+  "current_active_key": "Origen de la Clave API Activa",
+  "key_source_env": "Variable de Entorno (.env)",
+  "key_source_user": "Anulación de Usuario Personalizada",
+  "configure_key": "Configurar Clave",
+  "api_key_label": "Clave API de OpenWeatherMap",
+  "testing_key": "Probando Clave...",
+  "demo_mode_active": "Modo de Demostración",
+  "demo_mode_desc": "SkyPulse se está ejecutando actualmente en modo de demostración fuera de línea utilizando un generador de datos simulados localizado a prueba de fallas."
 }

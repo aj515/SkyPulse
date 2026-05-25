@@ -49,5 +49,19 @@
   "min": "Min",
   "max": "Max",
   "dew_point": "Dew Point",
-  "pop": "Precipitation %"
+  "pop": "Precipitation %",
+  "api_key_manager": "API Key Manager",
+  "api_key_placeholder": "Enter OpenWeatherMap API Key...",
+  "validate_save": "Validate & Save",
+  "key_valid": "API Key validated successfully!",
+  "key_invalid": "Invalid or inactive API key. Please check and try again.",
+  "key_help": "Get a free API Key on OpenWeatherMap",
+  "current_active_key": "Active API Key Source",
+  "key_source_env": "Environment Variable (.env)",
+  "key_source_user": "Custom User Override",
+  "configure_key": "Configure Key",
+  "api_key_label": "OpenWeatherMap API Key",
+  "testing_key": "Testing Key...",
+  "demo_mode_active": "Demo Mode",
+  "demo_mode_desc": "SkyPulse is currently running in offline demo mode using a fail-safe localized mock data generator."
 }

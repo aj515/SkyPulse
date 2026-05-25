@@ -7,8 +7,9 @@ import SearchBar from './SearchBar';
 import LanguageSelector from './LanguageSelector';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import KeyIcon from '@mui/icons-material/Key';
 
-export default function Header({ onGeolocate, onToggleFavorites }) {
+export default function Header({ onGeolocate, onToggleFavorites, onToggleApiKey }) {
   const { t } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
   const { units, setUnits } = useSettings();
@@ -51,6 +52,19 @@ export default function Header({ onGeolocate, onToggleFavorites }) {
 
             {/* Language */}
             <LanguageSelector />
+
+            {/* API Key Manager */}
+            <button
+              id="api-key-btn"
+              onClick={onToggleApiKey}
+              className="p-2 rounded-lg
+                hover:bg-sky-100/60 dark:hover:bg-sky-900/20
+                text-slate-500 dark:text-slate-400
+                transition-all duration-200"
+              title={t('api_key_manager')}
+            >
+              <KeyIcon style={{ fontSize: 20 }} />
+            </button>
 
             {/* Favorites */}
             <button

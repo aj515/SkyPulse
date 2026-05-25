@@ -13,6 +13,7 @@ import WeatherMap from './components/WeatherMap';
 import WeatherCompare from './components/WeatherCompare';
 import WeatherAlerts from './components/WeatherAlerts';
 import FavoritesList from './components/FavoritesList';
+import ApiKeyModal from './components/ApiKeyModal';
 import Skeleton from './components/Skeleton';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
@@ -25,6 +26,7 @@ export default function App() {
   const { position, requestPosition } = useGeolocation();
   const isOnline = useOnlineStatus();
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
   // Fetch weather on geolocation or default city
@@ -84,20 +86,38 @@ export default function App() {
 
       {/* Demo Mode Banners */}
       {source === 'demo' && (
-        <div className="bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 text-white text-center py-1.5 px-4 text-xs font-semibold animate-fade-in shadow-sm tracking-wide">
-          🎨 Demo Mode — Set your OpenWeatherMap API key in <code className="bg-white/20 px-1.5 py-0.5 rounded font-mono">.env</code> for live data
+        <div className="bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 text-white text-center py-2 px-4 text-xs font-semibold animate-fade-in shadow-sm tracking-wide flex items-center justify-center flex-wrap gap-2">
+          <span>🎨 Demo Mode — Running with localized mock weather data.</span>
+          <button
+            onClick={() => setApiKeyModalOpen(true)}
+            className="bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded font-bold transition-all duration-200 backdrop-blur-md active:scale-95 text-[10px] uppercase tracking-wider border border-white/10"
+          >
+            {t('configure_key')}
+          </button>
         </div>
       )}
 
       {source === 'demo_unauthorized' && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-center py-2 px-4 text-xs font-semibold animate-fade-in shadow-sm tracking-wide flex items-center justify-center gap-1.5">
-          ⚠️ Key Pending / Unauthorized — Your new OpenWeatherMap key is not yet active (activation takes 10 to 60 minutes) or requires One Call activation. Running in offline demo mode.
+        <div className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-center py-2 px-4 text-xs font-semibold animate-fade-in shadow-sm tracking-wide flex items-center justify-center flex-wrap gap-2">
+          <span>⚠️ Key Pending / Unauthorized — Your OpenWeatherMap API key requires subscription activation. Running in offline demo mode.</span>
+          <button
+            onClick={() => setApiKeyModalOpen(true)}
+            className="bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded font-bold transition-all duration-200 backdrop-blur-md active:scale-95 text-[10px] uppercase tracking-wider border border-white/10"
+          >
+            {t('configure_key')}
+          </button>
         </div>
       )}
 
       {source === 'demo_error_fallback' && (
-        <div className="bg-gradient-to-r from-rose-500 to-orange-500 text-white text-center py-2 px-4 text-xs font-semibold animate-fade-in shadow-sm tracking-wide flex items-center justify-center gap-1.5">
-          ⚠️ Live Connection Issue — Unable to reach weather servers right now. Running in offline demo fallback mode.
+        <div className="bg-gradient-to-r from-rose-500 to-orange-500 text-white text-center py-2 px-4 text-xs font-semibold animate-fade-in shadow-sm tracking-wide flex items-center justify-center flex-wrap gap-2">
+          <span>⚠️ Live Connection Issue — Unable to reach weather servers right now. Running in offline demo fallback mode.</span>
+          <button
+            onClick={() => setApiKeyModalOpen(true)}
+            className="bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded font-bold transition-all duration-200 backdrop-blur-md active:scale-95 text-[10px] uppercase tracking-wider border border-white/10"
+          >
+            {t('configure_key')}
+          </button>
         </div>
       )}
 
@@ -105,6 +125,7 @@ export default function App() {
       <Header
         onGeolocate={handleGeolocate}
         onToggleFavorites={() => setFavoritesOpen(!favoritesOpen)}
+        onToggleApiKey={() => setApiKeyModalOpen(true)}
       />
 
       {/* Main Content */}
@@ -203,8 +224,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Favorites Drawer */}
+      {/* Drawer & Modal */}
       <FavoritesList open={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
+      <ApiKeyModal open={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
     </div>
   );
 }

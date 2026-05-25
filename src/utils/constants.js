@@ -1,4 +1,4 @@
-export const API_KEY = import.meta.env.VITE_OWM_API_KEY || 'demo_key_replace_me';
+export const API_KEY = import.meta.env.VITE_OWM_API_KEY || import.meta.env.VITE_OPENWEATHER_API_KEY || 'demo_key_replace_me';
 export const BASE_URL = 'https://api.openweathermap.org';
 
 export const ENDPOINTS = {

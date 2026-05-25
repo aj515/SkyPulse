@@ -1,12 +1,29 @@
 import axios from 'axios';
-import { BASE_URL, ENDPOINTS, API_KEY } from '../utils/constants';
+import { BASE_URL, ENDPOINTS } from '../utils/constants';
 import { getCachedData, setCachedData } from '../utils/offlineCache';
 import { searchDemoCities } from '../utils/demoData';
+
+function getEffectiveApiKey() {
+  return localStorage.getItem('skypulse_api_key') || import.meta.env.VITE_OWM_API_KEY || import.meta.env.VITE_OPENWEATHER_API_KEY || 'demo_key_replace_me';
+}
+
+function isDemoKey(key) {
+  return !key || key === 'demo_key_replace_me' || key === 'your_openweathermap_api_key_here';
+}
 
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
-  params: { appid: API_KEY },
+});
+
+// Dynamically inject the active API key on every request
+api.interceptors.request.use((config) => {
+  const activeKey = getEffectiveApiKey();
+  config.params = {
+    ...config.params,
+    appid: activeKey,
+  };
+  return config;
 });
 
 function cacheKey(endpoint, params) {
@@ -55,7 +72,8 @@ export async function geocodeCity(query, limit = 5) {
   if (!query || query.length < 2) return [];
 
   // If running in demo mode, immediately return local search suggestions
-  if (API_KEY === 'demo_key_replace_me' || API_KEY === 'your_openweathermap_api_key_here') {
+  const activeKey = getEffectiveApiKey();
+  if (isDemoKey(activeKey)) {
     return searchDemoCities(query, limit);
   }
 
