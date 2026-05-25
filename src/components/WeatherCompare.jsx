@@ -28,6 +28,16 @@ export default function WeatherCompare() {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
 
+  // Prevent comparing a city with itself when primaryCity is updated
+  useEffect(() => {
+    if (primaryCity && compareCity && primaryCity.name === compareCity.name) {
+      const fallback = MOCK_CITIES.find(c => c.name !== primaryCity.name);
+      if (fallback) {
+        setCompareCity(fallback);
+      }
+    }
+  }, [primaryCity, compareCity]);
+
   // Fetch weather data for the compared city
   useEffect(() => {
     if (!compareCity) return;
