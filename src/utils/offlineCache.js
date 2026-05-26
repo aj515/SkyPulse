@@ -17,6 +17,17 @@ export function getCachedData(key) {
   }
 }
 
+// Returns data even if the TTL has expired — used for stale-while-revalidate.
+export function getStaleData(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    return JSON.parse(raw).data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function setCachedData(key, data) {
   try {
     localStorage.setItem(

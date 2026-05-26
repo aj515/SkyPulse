@@ -14,6 +14,17 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff,woff2}'],
         runtimeCaching: [
           {
+            // Cache requests through the Vercel proxy (/api/owm) in production
+            urlPattern: /\/api\/owm(\?.*)?$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'weather-api-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 600 },
+              cacheableResponse: { statuses: [200] }
+            }
+          },
+          {
+            // Cache direct OWM calls (used in dev mode and with custom user keys)
             urlPattern: /^https:\/\/api\.openweathermap\.org\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -61,6 +72,20 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    open: true
+    open: true,
+    // In dev, proxy /api/owm → OWM directly using the local VITE_ key.
+    // In production, Vercel routes /api/owm to api/owm.js (server-side key, never bundled).
+    proxy: {
+      '/api/owm': {
+        target: 'https://api.openweathermap.org',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          const endpoint = url.searchParams.get('endpoint') || '';
+          url.searchParams.delete('endpoint');
+          return endpoint + '?' + url.searchParams.toString();
+        },
+      },
+    },
   }
 })

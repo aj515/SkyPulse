@@ -1,26 +1,62 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { geocodeCity } from '../api/weather';
+import { geocodeCity, fetchCurrentWeather } from '../api/weather';
 import { useSettings } from '../context/SettingsContext';
 import { useWeatherContext } from '../context/WeatherContext';
+import { DEFAULT_CITIES } from '../utils/constants';
 import SearchIcon from '@mui/icons-material/Search';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import HistoryIcon from '@mui/icons-material/History';
 import CloseIcon from '@mui/icons-material/Close';
+import PublicIcon from '@mui/icons-material/Public';
+
+function formatTemp(temp, units) {
+  const r = Math.round(temp);
+  if (units === 'imperial') return `${r}°F`;
+  if (units === 'standard') return `${r} K`;
+  return `${r}°C`;
+}
+
+function CityWeatherLine({ lat, lon, cityWeather, units }) {
+  const w = cityWeather[`${lat},${lon}`];
+  if (!w) return null;
+  return (
+    <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+      {w.icon && (
+        <img
+          src={`https://openweathermap.org/img/wn/${w.icon}.png`}
+          alt=""
+          className="w-4 h-4 -my-1"
+        />
+      )}
+      <span className="font-medium">{formatTemp(w.temp, units)}</span>
+      {w.desc && <span className="capitalize truncate">&middot; {w.desc}</span>}
+    </span>
+  );
+}
 
 export default function SearchBar({ onGeolocate }) {
   const { t } = useTranslation();
-  const { addRecentSearch, recentSearches } = useSettings();
+  const { addRecentSearch, recentSearches, units, effectiveApiKey, isDemoKey } = useSettings();
   const { fetchWeather } = useWeatherContext();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cityWeather, setCityWeather] = useState({});
   const inputRef = useRef(null);
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
+  const abortRef = useRef(null);
+  const fetchedRef = useRef(new Set());
 
-  // Close dropdown on outside click
+  // When units change, invalidate the weather preview cache so temps re-fetch with correct unit.
+  useEffect(() => {
+    fetchedRef.current = new Set();
+    setCityWeather({});
+  }, [units]);
+
+  // Close dropdown on outside click.
   useEffect(() => {
     const handleClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -31,39 +67,93 @@ export default function SearchBar({ onGeolocate }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  const loadWeatherForCities = useCallback(
+    async (cities) => {
+      // Skip fetching in demo mode — no real temps to show.
+      if (isDemoKey(effectiveApiKey)) return;
+
+      const toFetch = cities.filter((c) => {
+        const key = `${c.lat},${c.lon}`;
+        if (fetchedRef.current.has(key)) return false;
+        fetchedRef.current.add(key);
+        return true;
+      });
+      if (!toFetch.length) return;
+
+      const settled = await Promise.allSettled(
+        toFetch.map((city) => fetchCurrentWeather(city.lat, city.lon, units))
+      );
+
+      setCityWeather((prev) => {
+        const next = { ...prev };
+        settled.forEach((result, i) => {
+          if (result.status === 'fulfilled') {
+            const d = result.value;
+            next[`${toFetch[i].lat},${toFetch[i].lon}`] = {
+              temp: d.main.temp,
+              desc: d.weather?.[0]?.description,
+              icon: d.weather?.[0]?.icon,
+            };
+          }
+        });
+        return next;
+      });
+    },
+    [units, effectiveApiKey, isDemoKey]
+  );
+
   const handleSearch = useCallback(
     async (q) => {
       if (!q || q.length < 2) {
         setResults([]);
         return;
       }
+
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+      const signal = abortRef.current.signal;
+
       setLoading(true);
       try {
-        const data = await geocodeCity(q);
-        setResults(
-          data.map((item) => ({
-            name: item.name,
-            country: item.country,
-            state: item.state,
-            lat: item.lat,
-            lon: item.lon,
-          }))
-        );
-      } catch {
-        setResults([]);
+        const data = await geocodeCity(q, 5, signal);
+        const mapped = data.map((item) => ({
+          name: item.name,
+          country: item.country,
+          state: item.state,
+          lat: item.lat,
+          lon: item.lon,
+        }));
+        setResults(mapped);
+        loadWeatherForCities(mapped);
+      } catch (err) {
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          setResults([]);
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     },
-    []
+    [loadWeatherForCities]
   );
 
   const handleInputChange = (e) => {
     const val = e.target.value;
     setQuery(val);
     setOpen(true);
-
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => handleSearch(val), 400);
+  };
+
+  const handleFocus = () => {
+    setOpen(true);
+    // Preload weather for every city that will show on the suggestions screen.
+    const suggestions = [
+      ...recentSearches.slice(0, 5),
+      ...DEFAULT_CITIES.filter(
+        (d) => !recentSearches.some((r) => r.name === d.name && r.country === d.country)
+      ),
+    ];
+    loadWeatherForCities(suggestions);
   };
 
   const handleSelectCity = (city) => {
@@ -81,8 +171,14 @@ export default function SearchBar({ onGeolocate }) {
     }
   };
 
-  const showRecent = open && query.length < 2 && recentSearches.length > 0;
-  const showResults = open && results.length > 0 && query.length >= 2;
+  // Popular cities = DEFAULT_CITIES minus anything already in recent searches.
+  const popularCities = DEFAULT_CITIES.filter(
+    (d) => !recentSearches.some((r) => r.name === d.name && r.country === d.country)
+  );
+
+  const showSuggestions =
+    open && query.length < 2 && (recentSearches.length > 0 || popularCities.length > 0);
+  const showResults = open && query.length >= 2;
 
   return (
     <div ref={wrapperRef} className="relative w-full max-w-md">
@@ -98,7 +194,7 @@ export default function SearchBar({ onGeolocate }) {
           type="text"
           value={query}
           onChange={handleInputChange}
-          onFocus={() => setOpen(true)}
+          onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           placeholder={t('search_placeholder')}
           className="w-full pl-10 pr-20 py-2.5 rounded-xl
@@ -132,70 +228,121 @@ export default function SearchBar({ onGeolocate }) {
       </div>
 
       {/* Dropdown */}
-      {(showResults || showRecent) && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50
-          bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl
-          border border-slate-200/60 dark:border-slate-700/40
-          rounded-xl shadow-xl overflow-hidden
-          animate-fade-in">
+      {(showSuggestions || showResults) && (
+        <div
+          className="absolute top-full left-0 right-0 mt-2 z-50
+            bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl
+            border border-slate-200/60 dark:border-slate-700/40
+            rounded-xl shadow-xl overflow-hidden
+            animate-fade-in"
+        >
+          {/* ── Suggestions (no query typed yet) ── */}
+          {showSuggestions && (
+            <>
+              {recentSearches.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <HistoryIcon style={{ fontSize: 14 }} />
+                    {t('recent_searches')}
+                  </div>
+                  {recentSearches.map((city, i) => (
+                    <button
+                      key={`recent-${i}`}
+                      onClick={() => handleSelectCity(city)}
+                      className="w-full px-3 py-2.5 text-left flex items-center gap-2
+                        hover:bg-sky-50/60 dark:hover:bg-sky-900/20 transition-colors"
+                    >
+                      <HistoryIcon style={{ fontSize: 16 }} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {city.name}
+                          {city.state && (
+                            <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">{city.state}</span>
+                          )}
+                        </div>
+                        <CityWeatherLine lat={city.lat} lon={city.lon} cityWeather={cityWeather} units={units} />
+                      </div>
+                      {city.country && (
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 shrink-0">
+                          {city.country}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* Recent Searches */}
-          {showRecent && (
+              {popularCities.length > 0 && (
+                <div className={recentSearches.length > 0 ? 'border-t border-slate-100 dark:border-slate-700/50' : ''}>
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <PublicIcon style={{ fontSize: 14 }} />
+                    Popular Cities
+                  </div>
+                  {popularCities.map((city, i) => (
+                    <button
+                      key={`popular-${i}`}
+                      onClick={() => handleSelectCity(city)}
+                      className="w-full px-3 py-2.5 text-left flex items-center gap-2
+                        hover:bg-sky-50/60 dark:hover:bg-sky-900/20 transition-colors"
+                    >
+                      <SearchIcon style={{ fontSize: 16 }} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {city.name}
+                        </div>
+                        <CityWeatherLine lat={city.lat} lon={city.lon} cityWeather={cityWeather} units={units} />
+                      </div>
+                      {city.country && (
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 shrink-0">
+                          {city.country}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Search Results (query typed) ── */}
+          {showResults && (
             <div>
-              <div className="px-3 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <HistoryIcon style={{ fontSize: 14 }} />
-                {t('recent_searches')}
-              </div>
-              {recentSearches.map((city, i) => (
+              {results.map((city, i) => (
                 <button
-                  key={`recent-${i}`}
+                  key={`result-${i}`}
                   onClick={() => handleSelectCity(city)}
                   className="w-full px-3 py-2.5 text-left flex items-center gap-2
                     hover:bg-sky-50/60 dark:hover:bg-sky-900/20 transition-colors"
                 >
-                  <HistoryIcon style={{ fontSize: 16 }} className="text-slate-300 dark:text-slate-600" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {city.name}
-                  </span>
+                  <SearchIcon style={{ fontSize: 16 }} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {city.name}
+                      {city.state && (
+                        <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">{city.state}</span>
+                      )}
+                    </div>
+                    <CityWeatherLine lat={city.lat} lon={city.lon} cityWeather={cityWeather} units={units} />
+                  </div>
                   {city.country && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">{city.country}</span>
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 shrink-0">
+                      {city.country}
+                    </span>
                   )}
                 </button>
               ))}
-            </div>
-          )}
 
-          {/* Search Results */}
-          {showResults &&
-            results.map((city, i) => (
-              <button
-                key={`result-${i}`}
-                onClick={() => handleSelectCity(city)}
-                className="w-full px-3 py-2.5 text-left flex items-center gap-2
-                  hover:bg-sky-50/60 dark:hover:bg-sky-900/20 transition-colors"
-              >
-                <SearchIcon style={{ fontSize: 16 }} className="text-slate-300 dark:text-slate-600" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {city.name}
-                  </span>
-                  {city.state && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">
-                      {city.state}
-                    </span>
-                  )}
+              {loading && (
+                <div className="px-3 py-3 text-center text-sm text-slate-400">
+                  <div className="animate-pulse-gentle">Searching...</div>
                 </div>
-                {city.country && (
-                  <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
-                    {city.country}
-                  </span>
-                )}
-              </button>
-            ))}
+              )}
 
-          {loading && (
-            <div className="px-3 py-3 text-center text-sm text-slate-400">
-              <div className="animate-pulse-gentle">Searching...</div>
+              {!loading && results.length === 0 && (
+                <div className="px-3 py-4 text-center text-sm text-slate-400 dark:text-slate-500">
+                  No cities found
+                </div>
+              )}
             </div>
           )}
         </div>

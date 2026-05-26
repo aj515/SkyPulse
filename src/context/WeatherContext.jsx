@@ -3,6 +3,7 @@ import { fetchAllWeatherData, reverseGeocode } from '../api/weather';
 import { useSettings } from './SettingsContext';
 import { getDemoWeatherData, DEMO_CITY } from '../utils/demoData';
 import { API_KEY } from '../utils/constants';
+import { classifyApiError } from '../utils/errors';
 
 const WeatherContext = createContext();
 
@@ -21,6 +22,7 @@ const initialState = {
   timezone_offset: 0,
   loading: false,
   error: null,
+  errorCode: null,
   source: null,
 };
 
@@ -33,6 +35,7 @@ function weatherReducer(state, action) {
         ...state,
         loading: false,
         error: null,
+        errorCode: action.payload.errorCode || null,
         current: action.payload.current,
         hourly: action.payload.hourly,
         daily: action.payload.daily,
@@ -42,7 +45,7 @@ function weatherReducer(state, action) {
         source: action.payload.source,
       };
     case 'FETCH_ERROR':
-      return { ...state, loading: false, error: action.payload };
+      return { ...state, loading: false, error: action.payload.message, errorCode: action.payload.code };
     case 'SET_CITY':
       return { ...state, city: action.payload };
     default:
@@ -121,14 +124,23 @@ export function WeatherProvider({ children }) {
           },
         });
       } catch (error) {
-        // Safe robust fallback: Use demo weather data immediately so the app never crashes!
+        const { code, message } = classifyApiError(error);
+
+        // Aborted requests (user typed a new query) should not update state
+        if (code === 'ABORTED') return;
+
         const demoCity = cityInfo || DEMO_CITY;
         const demoData = getDemoWeatherData(units, demoCity.name);
-        
-        // Check if this error is an authentication / authorization issue (401)
-        const isAuthError = error.response?.status === 401 || error.message?.includes('401');
-        const sourceLabel = isAuthError ? 'demo_unauthorized' : 'demo_error_fallback';
-        
+
+        const sourceByCode = {
+          UNAUTHORIZED: 'demo_unauthorized',
+          RATE_LIMITED: 'demo_rate_limited',
+          OFFLINE: 'demo_offline',
+          TIMEOUT: 'demo_timeout',
+          NO_KEY: 'demo_no_key',
+        };
+        const sourceLabel = sourceByCode[code] || 'demo_error_fallback';
+
         dispatch({
           type: 'FETCH_SUCCESS',
           payload: {
@@ -139,6 +151,8 @@ export function WeatherProvider({ children }) {
             city: demoCity,
             timezone_offset: demoData.timezone_offset,
             source: sourceLabel,
+            errorCode: code,
+            error: message,
           },
         });
       }
