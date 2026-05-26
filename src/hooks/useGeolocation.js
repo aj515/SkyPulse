@@ -38,10 +38,43 @@ export function useGeolocation() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        let name = '';
+        let country = '';
+
+        // Try to reverse geocode using free Nominatim OpenStreetMap API first (highly precise for GPS lat/lon!)
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`);
+          if (res.ok) {
+            const data = await res.json();
+            name = data.address?.city || data.address?.town || data.address?.municipality || data.address?.village || data.address?.suburb || '';
+            country = data.address?.country_code?.toUpperCase() || '';
+          }
+        } catch (e) {
+          console.error('Nominatim reverse geocode failed:', e);
+        }
+
+        // If Nominatim failed to get a city name, fall back to IP Geolocation to get general city
+        if (!name) {
+          try {
+            const res = await fetch('https://ipapi.co/json/');
+            if (res.ok) {
+              const data = await res.json();
+              name = data.city;
+              country = data.country_code;
+            }
+          } catch (e) {
+            console.error('IP Geolocation fallback failed for GPS name:', e);
+          }
+        }
+
         setPosition({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
+          lat,
+          lon,
+          name,
+          country,
         });
         setLoading(false);
       },
