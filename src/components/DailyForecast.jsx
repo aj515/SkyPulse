@@ -36,8 +36,8 @@ export default function DailyForecast() {
               key={i}
               className="flex items-center gap-3 p-3 rounded-xl
                 hover:bg-white/40 dark:hover:bg-slate-800/30
-                transition-all duration-200"
-              style={{ opacity: 0, animation: `fadeInUp 0.4s ease-out ${i * 0.06}s forwards` }}
+                transition-all duration-200 animate-fade-in-up"
+              style={{ animationDelay: `${i * 0.06}s` }}
             >
               {/* Day */}
               <div className="w-20 shrink-0">

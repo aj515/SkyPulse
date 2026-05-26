@@ -193,7 +193,7 @@ export default function WeatherCompare() {
           </div>
 
           {/* Side-by-Side Comparison Columns */}
-          <div className="grid grid-cols-2 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             {/* Primary City Column */}
             <div className="p-3.5 rounded-xl bg-white/40 dark:bg-slate-800/20 border border-white/20 dark:border-slate-800/10">
               <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-300 font-extrabold block mb-1">
