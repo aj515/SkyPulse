@@ -5,19 +5,21 @@ export function useGeolocation() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchIpFallback = useCallback(async (fallbackErrorMsg) => {
+  const fetchIpFallback = useCallback(async (fallbackErrorMsg, onSuccess = null) => {
     try {
       const res = await fetch('https://ipapi.co/json/');
       if (res.ok) {
         const data = await res.json();
         if (data.latitude && data.longitude) {
-          setPosition({
+          const ipPos = {
             lat: data.latitude,
             lon: data.longitude,
             name: data.city,
             country: data.country_code,
-          });
+          };
+          setPosition(ipPos);
           setLoading(false);
+          if (onSuccess) onSuccess(ipPos);
           return;
         }
       }
@@ -28,12 +30,14 @@ export function useGeolocation() {
     setLoading(false);
   }, []);
 
-  const requestPosition = useCallback(() => {
+  const requestPosition = useCallback((onSuccess = null, onError = null) => {
     setLoading(true);
     setError(null);
 
     if (!navigator.geolocation) {
-      fetchIpFallback('Geolocation is not supported by your browser');
+      const errMsg = 'Geolocation is not supported by your browser';
+      fetchIpFallback(errMsg, onSuccess);
+      if (onError) onError(errMsg);
       return;
     }
 
@@ -70,16 +74,20 @@ export function useGeolocation() {
           }
         }
 
-        setPosition({
+        const newPos = {
           lat,
           lon,
           name,
           country,
-        });
+        };
+
+        setPosition(newPos);
         setLoading(false);
+        if (onSuccess) onSuccess(newPos);
       },
       (err) => {
-        fetchIpFallback(err.message);
+        fetchIpFallback(err.message, onSuccess);
+        if (onError) onError(err.message);
       },
       {
         enableHighAccuracy: false,

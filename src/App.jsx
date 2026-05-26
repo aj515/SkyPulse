@@ -29,27 +29,19 @@ export default function App() {
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Fetch weather on geolocation or default city
-  useEffect(() => {
-    if (initialized) return;
-
-    if (position) {
-      const cityInfo = position.name ? {
-        name: position.name,
-        country: position.country || '',
-        lat: position.lat,
-        lon: position.lon,
-      } : null;
-      fetchWeather(position.lat, position.lon, cityInfo);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInitialized(true);
-    }
-  }, [position, fetchWeather, initialized]);
-
   // Auto-request geolocation on mount
   useEffect(() => {
     const timer = setTimeout(() => {
-      requestPosition();
+      requestPosition((pos) => {
+        const cityInfo = pos.name ? {
+          name: pos.name,
+          country: pos.country || '',
+          lat: pos.lat,
+          lon: pos.lon,
+        } : null;
+        fetchWeather(pos.lat, pos.lon, cityInfo);
+        setInitialized(true);
+      });
     }, 500);
 
     // Fallback: if no geolocation after 5s, try IP location first, then Manila
@@ -95,17 +87,16 @@ export default function App() {
   }, [units, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGeolocate = useCallback(() => {
-    requestPosition();
-    if (position) {
-      const cityInfo = position.name ? {
-        name: position.name,
-        country: position.country || '',
-        lat: position.lat,
-        lon: position.lon,
+    requestPosition((pos) => {
+      const cityInfo = pos.name ? {
+        name: pos.name,
+        country: pos.country || '',
+        lat: pos.lat,
+        lon: pos.lon,
       } : null;
-      fetchWeather(position.lat, position.lon, cityInfo);
-    }
-  }, [position, requestPosition, fetchWeather]);
+      fetchWeather(pos.lat, pos.lon, cityInfo);
+    });
+  }, [requestPosition, fetchWeather]);
 
   return (
     <div className="min-h-screen flex flex-col">
