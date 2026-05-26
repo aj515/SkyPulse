@@ -55,7 +55,7 @@ graph TD
     WeatherCtx -->|3. Feed Data Curves| ChartComp
     WeatherCtx -->|4. Populates Compare Cards| Comp
     
-    MapComp -->|5. Request Layers (temp, rain, wind)| MapAPI
+    MapComp -->|"5. Request Layers (temp, rain, wind)"| MapAPI
     
     %% Fallback Actions
     WeatherCtx -->|6. API Limit Error Fallback| DemoMock["Offline Demo Generator"]

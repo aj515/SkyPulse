@@ -54,7 +54,7 @@ graph TD
     WeatherCtx -->|3. Feed Data Curves| ChartComp
     WeatherCtx -->|4. Populates Compare Cards| CompareComp
     
-    MapComp -->|5. Request Layers (temp, rain, wind)| MapTilesAPI["Map Tiles API"]
+    MapComp -->|"5. Request Layers (temp, rain, wind)"| MapTilesAPI["Map Tiles API"]
     
     WeatherCtx -->|6. Error Fallback| OfflineMock["Offline Demo Generator"]
     OfflineMock -.->|Feeds Mock Data| UI
