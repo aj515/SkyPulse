@@ -34,7 +34,14 @@ export default function App() {
     if (initialized) return;
 
     if (position) {
-      fetchWeather(position.lat, position.lon);
+      const cityInfo = position.name ? {
+        name: position.name,
+        country: position.country || '',
+        lat: position.lat,
+        lon: position.lon,
+      } : null;
+      fetchWeather(position.lat, position.lon, cityInfo);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialized(true);
     }
   }, [position, fetchWeather, initialized]);
@@ -45,9 +52,29 @@ export default function App() {
       requestPosition();
     }, 500);
 
-    // Fallback: if no geolocation after 5s, use default city
-    const fallback = setTimeout(() => {
+    // Fallback: if no geolocation after 5s, try IP location first, then Manila
+    const fallback = setTimeout(async () => {
       if (!initialized) {
+        try {
+          const res = await fetch('https://ipapi.co/json/');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.latitude && data.longitude) {
+              const cityInfo = {
+                name: data.city,
+                country: data.country_code || '',
+                lat: data.latitude,
+                lon: data.longitude,
+              };
+              fetchWeather(data.latitude, data.longitude, cityInfo);
+              setInitialized(true);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('App level fallback to IP geolocation failed:', e);
+        }
+
         const defaultCity = DEFAULT_CITIES[0]; // Manila
         fetchWeather(defaultCity.lat, defaultCity.lon, defaultCity);
         setInitialized(true);
@@ -58,7 +85,7 @@ export default function App() {
       clearTimeout(timer);
       clearTimeout(fallback);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialized, fetchWeather, requestPosition]);
 
   // Refetch when units or language changes
   useEffect(() => {
@@ -70,7 +97,13 @@ export default function App() {
   const handleGeolocate = useCallback(() => {
     requestPosition();
     if (position) {
-      fetchWeather(position.lat, position.lon);
+      const cityInfo = position.name ? {
+        name: position.name,
+        country: position.country || '',
+        lat: position.lat,
+        lon: position.lon,
+      } : null;
+      fetchWeather(position.lat, position.lon, cityInfo);
     }
   }, [position, requestPosition, fetchWeather]);
 
